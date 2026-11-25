@@ -55,8 +55,14 @@ class Node:
         while self.running.is_set():
             try:
                 msg, addr = net.receive(sock)
+            except ConnectionResetError:
+                # Windows quirk: after we send UDP to a port nobody listens on any more
+                # (a crashed peer), the next recv raises WinError 10054. Not a real error.
+                continue
             except OSError:
-                break                                 # socket closed on shutdown
+                if not self.running.is_set():
+                    break                             # socket closed on shutdown
+                continue
             self._dispatch(msg, addr)
 
     # --- sending ---------------------------------------------------------
@@ -64,7 +70,10 @@ class Node:
         return messages.make(msg_type, self.node_id, **fields)
 
     def send(self, msg: dict, addr) -> None:
-        net.send(self.unicast, msg, tuple(addr))
+        try:
+            net.send(self.unicast, msg, tuple(addr))
+        except OSError:
+            pass        # peer is gone or unreachable; heartbeat timeout will deal with it
 
     def send_to(self, node_id: str, msg: dict) -> bool:
         peer = self.membership.get(node_id)

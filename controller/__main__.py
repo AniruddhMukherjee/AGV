@@ -4,6 +4,7 @@ import argparse
 import time
 
 from controller.discovery import Discovery
+from controller.heartbeat import Heartbeat
 from controller.node import Node
 
 
@@ -14,10 +15,12 @@ def main():
 
     node = Node(f"C{args.id}", role="controller")
     discovery = Discovery(node)
-    # Later: heartbeat, election, multicast, state get created here the same way.
+    heartbeat = Heartbeat(node)
+    # Later: election, multicast, state get created here the same way.
 
     node.start()
     discovery.start()
+    heartbeat.start()
     print(f"[{node.node_id}] started, unicast port {node.port}")
 
     try:
