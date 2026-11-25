@@ -34,6 +34,7 @@ def udp_broadcast_socket(port: int = DISCOVERY_PORT) -> socket.socket:
 def udp_socket() -> socket.socket:
     """Plain UDP socket on a free port, for direct node-to-node messages."""
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)   # so it can also send HELLO broadcasts
     sock.bind(("", 0))
     return sock
 
